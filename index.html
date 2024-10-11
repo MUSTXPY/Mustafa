@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الأوامر</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600&display=swap');
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #000000, #005f73, #0a9396);
+            direction: rtl;
+            color: #fff;
+        }
+
+        h1 {
+            margin-top: 20px;
+            font-size: 3em;
+            color: #00ff00;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        .pin {
+            margin: 10px;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            font-size: 1em;
+            margin: 10px 0;
+            width: 80%;
+            max-width: 300px;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            outline: none;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus {
+            background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.2em;
+            background-color: #0077b6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            box-shadow: 0px 5px 15px rgba(0, 119, 182, 0.4);
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+        }
+
+        button:hover {
+            background-color: #0096c7;
+            transform: scale(1.05);
+            box-shadow: 0px 8px 20px rgba(0, 150, 199, 0.6);
+        }
+
+        .wheel-container {
+            margin-top: 30px;
+            display: none;
+            position: relative;
+        }
+
+        .wheel {
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            border: 10px solid #333;
+            position: relative;
+            margin: 0 auto;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .wheel canvas {
+            transform: rotate(-90deg);
+        }
+
+        #spin-button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background-color: #52b788;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0px 5px 15px rgba(82, 183, 136, 0.4);
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+        }
+
+        #spin-button:hover {
+            background-color: #40916c;
+            transform: scale(1.05);
+            box-shadow: 0px 8px 20px rgba(64, 145, 108, 0.6);
+        }
+
+        #pointer {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 30px solid #00ff00;
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #result {
+            margin-top: 30px;
+            font-size: 1.8em;
+            color: #f7f7f7;
+            min-height: 50px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(3600deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>لعبة الأوامر</h1>
+
+    <div id="input-container">
+        <div class="pin">
+            <input type="text" id="player1" placeholder="اسم الشخص الأول">
+        </div>
+        <div class="pin">
+            <input type="text" id="player2" placeholder="اسم الشخص الثاني">
+        </div>
+        <button id="add-player">إضافة شخص</button>
+        <button id="start-game">ابدأ اللعبة</button>
+    </div>
+
+    <div class="wheel-container" id="wheel-container">
+        <div id="pointer"></div>
+        <div class="wheel" id="wheel">
+            <canvas id="wheelcanvas" width="400" height="400"></canvas>
+        </div>
+        <button id="spin-button">شغل العجلة</button>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        let playerCount = 2;
+        const maxPlayers = 10;
+        const players = [];
+        const challenges = [
+            "قل نكتة!", "اقفز على رجل واحدة لمدة دقيقة.", "غني أغنية"
+        ];
+
+        document.getElementById('add-player').addEventListener('click', function () {
+            if (playerCount < maxPlayers) {
+                playerCount++;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'player' + playerCount;
+                input.placeholder = 'اسم الشخص ' + playerCount;
+                input.classList.add('pin');
+                document.getElementById('input-container').insertBefore(input, document.getElementById('add-player'));
+            }
+        });
+
+        document.getElementById('start-game').addEventListener('click', function () {
+            for (let i = 1; i <= playerCount; i++) {
+                const playerName = document.getElementById('player' + i).value.trim();
+                if (playerName) {
+                    players.push(playerName);
+                }
+            }
+            if (players.length > 0) {
+                document.getElementById('input-container').style.display = 'none';
+                document.getElementById('wheel-container').style.display = 'block';
+                drawWheel();
+            }
+        });
+
+        function drawWheel() {
+            const canvas = document.getElementById('wheelcanvas');
+            const ctx = canvas.getContext('2d');
+            const arcSize = (2 * Math.PI) / players.length;
+            players.forEach((player, index) => {
+                const startAngle = index * arcSize;
+                const endAngle = startAngle + arcSize;
+                ctx.beginPath();
+                ctx.arc(200, 200, 200, startAngle, endAngle);
+                ctx.lineTo(200, 200);
+                ctx.fillStyle = index % 2 === 0 ? '#0077b6' : '#52b788';
+                ctx.fill();
+                ctx.save();
+                ctx.translate(200, 200);
+                ctx.rotate(startAngle + arcSize / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 18px Cairo';
+                ctx.fillText(player, 180, 10);
+                ctx.restore();
+            });
+        }
+
+        document.getElementById('spin-button').addEventListener('click', function () {
+            const duration = 3000;
+            const randomAngle = Math.floor(Math.random() * 3600);
+            const canvas = document.getElementById('wheelcanvas');
+            canvas.style.transition = `transform ${duration / 1000}s ease-out`;
+            canvas.style.transform = `rotate(${randomAngle}deg)`;
+            setTimeout(function () {
+                const selectedPlayerIndex = Math.floor((randomAngle % 360) / (360 / players.length));
+                const selectedPlayer = players[selectedPlayerIndex];
+                const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+                document.getElementById('result').textContent = `${selectedPlayer}: ${randomChallenge}`;
+            }, duration);
+        });
+    </script>
+</body>
+</html>
